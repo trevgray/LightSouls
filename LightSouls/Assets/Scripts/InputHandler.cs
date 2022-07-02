@@ -12,10 +12,17 @@ namespace LS
         public float mouseX;
         public float mouseY;
 
+        public bool bInput;
+
+        public bool rollFlag;
+        public bool sprintFlag;
+        public float rollInputTimer;
+
         PlayerControls inputActions;
 
         Vector2 movementInput;
         Vector2 cameraInput;
+
 
         public void OnEnable()
         {
@@ -23,7 +30,7 @@ namespace LS
             {
                 inputActions = new PlayerControls();
                 inputActions.PlayerMovement.Movement.performed += inputActions => movementInput = inputActions.ReadValue<Vector2>();
-                inputActions.PlayerMovement.Camera.performed += i => i.ReadValue<Vector2>();
+                inputActions.PlayerMovement.Camera.performed += i => cameraInput = i.ReadValue<Vector2>();
             }
 
             inputActions.Enable();
@@ -36,6 +43,7 @@ namespace LS
         public void TickInput(float delta)
         {
             MoveInput(delta);
+            HandleRollInput(delta);
         }
 
         private void MoveInput(float delta)
@@ -45,6 +53,26 @@ namespace LS
             moveAmount = Mathf.Clamp01(Mathf.Abs(horizontal) + Mathf.Abs(vertical));
             mouseX = cameraInput.x;
             mouseY = cameraInput.y;
+        }
+
+        private void HandleRollInput(float delta)
+        {
+            bInput = inputActions.PlayerActions.Roll.phase == UnityEngine.InputSystem.InputActionPhase.Performed;
+            if (bInput)
+            {
+                rollInputTimer += delta;
+                sprintFlag = true;
+            }
+            else
+            {
+                if (rollInputTimer > 0 && rollInputTimer < 0.5f)
+                {
+                    sprintFlag = false;
+                    rollFlag = true;
+                }
+
+                rollInputTimer = 0;
+            }
         }
     }
 }
